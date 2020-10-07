@@ -18,18 +18,44 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+let compressionResults = [];
+let allFilesCompleted = false;
+
+app.use("/processing", (req, res) => {
+  res.sendFile(path.join(__dirname, "views/processing.html"));
+});
+
+app.use("/compressionStatus", (req, res) => {
+  res.status(200).send(compressionResults);
+});
+
+// TODO: in processing.html, read this to stop calling a check on /compressionStatus once all files have completed - update UI
+app.use("/processingStatus", (req, res) => {
+  res.status(200).send(allFilesCompleted);
+});
+
 app.use("/compress", (req, res) => {
+  compressionResults = [];
+  allFilesCompleted = false;
+  //res.status(200).send("Process Started");
+  res.sendFile(path.join(__dirname, "views/processing.html"));
   fs.readdir(path.join(__dirname, "queue"), async (err, files) => {
     if (err || files==null) {
       res.status(400).send(err);
     } else {
-      files.forEach(async (file) => {
+      compressionResults.push(`Found ${files.length} files in the queue`);
+      for(let i = 0; i < files.length; i++) {
+        let file = files[i];
         console.log("===> File <===");
         console.log(file);
+        compressionResults.push(`Processing File: ${file}`);
         await compress.doCompressImage(file);
-      });
+        compressionResults.push(`File, ${file}, is compressed`);
+      }
+      compressionResults.push("File are compressed");
+      allFilesCompleted = true;
     }
-    res.status(200).send({"StatusCode": "Complete", "Count": files.length});
+    //res.status(200).send({"StatusCode": "Complete", "Count": files.length});
   });
 });
 

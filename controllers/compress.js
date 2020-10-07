@@ -27,7 +27,8 @@ exports.doCompressImage = (file) => {
     //const ext = file.name.split(".").pop();
     const filePath = path.join(__dirname, "../queue/" + file);
     Jimp.read(filePath).then(image => {
-      image.quality(50).write(path.join(__dirname, "../compressed/" + file));
+      image.resize(600, 600).write(path.join(__dirname, "../compressed/" + file));
+      //image.quality(30).write(path.join(__dirname, "../compressed/" + file));
       resolve(image);
     }).catch(error => {
       reject(error);
